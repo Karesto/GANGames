@@ -13,7 +13,7 @@ ngpu = 1
 latent_size = 64
 hidden_size = 256
 image_size = 36
-num_epochs = 300
+num_epochs = 3000
 batch_size = 32
 
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
@@ -67,13 +67,14 @@ fake_scores = np.zeros(num_epochs)
 # Start training
 total_step = len(data_loader)
 for epoch in range(num_epochs):
-    for i, (images, _) in enumerate(data_loader):
-        images = images.view(batch_size, -1).cuda()
-        images = Variable(images)
+    print(epoch)
+    for i, images in enumerate(data_loader):
+        #images = images.view(batch_size, -1).cuda()
+        images = Variable(images.cuda())
         # Create the labels which are later used as input for the BCE loss
-        real_labels = torch.ones(batch_size, 1).cuda()
+        real_labels = torch.ones(images.shape[0], 1).cuda()
         real_labels = Variable(real_labels)
-        fake_labels = torch.zeros(batch_size, 1).cuda()
+        fake_labels = torch.zeros(images.shape[0], 1).cuda()
         fake_labels = Variable(fake_labels)
 
         # ================================================================== #
@@ -82,13 +83,13 @@ for epoch in range(num_epochs):
 
         # Compute BCE_Loss using real images where BCE_Loss(x, y): - y * log(D(x)) - (1-y) * log(1 - D(x))
         # Second term of the loss is always zero since real_labels == 1
-        outputs = D(images)
+        outputs = D(images.float())
         d_loss_real = criterion(outputs, real_labels)
         real_score = outputs
         
         # Compute BCELoss using fake images
         # First term of the loss is always zero since fake_labels == 0
-        z = torch.randn(batch_size, latent_size).cuda()
+        z = torch.randn(images.shape[0], latent_size).cuda()
         z = Variable(z)
         fake_images = G(z)
         outputs = D(fake_images)
@@ -106,7 +107,7 @@ for epoch in range(num_epochs):
         # ================================================================== #
 
         # Compute loss with fake images
-        z = torch.randn(batch_size, latent_size).cuda()
+        z = torch.randn(images.shape[0], latent_size).cuda()
         z = Variable(z)
         fake_images = G(z)
         outputs = D(fake_images)
@@ -123,10 +124,10 @@ for epoch in range(num_epochs):
         # =================================================================== #
         #                          Update Statistics                          #
         # =================================================================== #
-        d_losses[epoch] = d_losses[epoch]*(i/(i+1.)) + d_loss.data[0]*(1./(i+1.))
-        g_losses[epoch] = g_losses[epoch]*(i/(i+1.)) + g_loss.data[0]*(1./(i+1.))
-        real_scores[epoch] = real_scores[epoch]*(i/(i+1.)) + real_score.mean().data[0]*(1./(i+1.))
-        fake_scores[epoch] = fake_scores[epoch]*(i/(i+1.)) + fake_score.mean().data[0]*(1./(i+1.))
+        d_losses[epoch] = d_losses[epoch]*(i/(i+1.)) + d_loss.item()*(1./(i+1.))
+        g_losses[epoch] = g_losses[epoch]*(i/(i+1.)) + g_loss.item()*(1./(i+1.))
+        real_scores[epoch] = real_scores[epoch]*(i/(i+1.)) + real_score.mean().item()*(1./(i+1.))
+        fake_scores[epoch] = fake_scores[epoch]*(i/(i+1.)) + fake_score.mean().item()*(1./(i+1.))
 
     plt.figure()
     pylab.xlim(0, num_epochs + 1)

@@ -24,22 +24,33 @@ def transform(rush):
         elif value == 'x':
             board[i][j] = -1
         else:
-            board[i][j] = string.ascii_lowercase.index(value)
+            board[i][j] = string.ascii_uppercase.index(value)
 
     return board 
 
 
-def dataset(bs):
+def dataset(bs, short = 50000, flatten = True, new = False):
     '''
     will return the first (or random, depending on order) elements of the rush hour dataset as flattened np arrays.
     '''
-    if os.path.exists('rushnumpy.txt'):
-        data = np.loadtxt('rushnumpy.txt')
-    else:
-        data = np.genfromtxt(datadir, dtype= str)[:,1]
-        rush = np.array([transform(x).flatten() for x in data])
-        np.savetxt("rushnumpy.txt", rush)
 
+    
+    if short:
+        if os.path.exists('rushnumpyshort.txt') and not new:
+            rush = np.loadtxt('rushnumpyshort.txt')
+        else:
+            data = np.random.choice(np.genfromtxt(datadir, dtype= str)[:,1],short)
+            rush = np.array([transform(x) for x in data])
+            np.savetxt("rushnumpyshort.txt", rush, fmt='%i')
+    else: 
+        if os.path.exists('rushnumpy.txt'):
+            rush = np.loadtxt('rushnumpy.txt')
+        else:
+            data = np.genfromtxt(datadir, dtype= str)[:,1]
+            rush = np.array([transform(x) for x in data])
+            np.savetxt("rushnumpy.txt", rush, fmt='%i')
+    if flatten:
+        rush = rush.reshape(-1,36)
     data_loader = torch.utils.data.DataLoader(dataset=rush,
                                           batch_size=bs, 
                                           shuffle=True)
