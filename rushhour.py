@@ -51,6 +51,7 @@ def dataset(bs, short = 50000, flatten = True, new = False):
             np.savetxt("rushnumpy.txt", rush, fmt='%i')
     if not flatten:
         rush = rush.reshape(-1,6,6)
+    print(rush.shape)
     data_loader = torch.utils.data.DataLoader(dataset=rush,
                                           batch_size=bs, 
                                           shuffle=True)
