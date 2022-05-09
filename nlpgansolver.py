@@ -40,8 +40,7 @@ G = nn.Sequential(
     nn.ReLU(),
     nn.Linear(hidden_size, hidden_size),
     nn.ReLU(),
-    nn.Linear(hidden_size, image_size),
-    nn.Tanh())
+    nn.Linear(hidden_size, image_size))
 
 G = G.to(device)
 D = D.to(device)
@@ -144,5 +143,5 @@ for epoch in range(num_epochs):
     plt.legend()
     plt.savefig('accuracy.pdf')
     plt.close()
-    torch.save(G.state_dict(), 'G.ckpt')
-    torch.save(D.state_dict(), 'D.ckpt')
+    torch.save(G, 'G.pth')
+    torch.save(D, 'D.p')
