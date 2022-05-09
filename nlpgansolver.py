@@ -13,7 +13,7 @@ ngpu = 1
 latent_size = 64
 hidden_size = 256
 image_size = 36
-num_epochs = 3000
+num_epochs = 300
 batch_size = 32
 
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
@@ -48,8 +48,8 @@ D = D.to(device)
 
 
 criterion = nn.BCELoss()
-d_optimizer = torch.optim.Adam(D.parameters(), lr=0.0002)
-g_optimizer = torch.optim.Adam(G.parameters(), lr=0.0002)
+d_optimizer = torch.optim.Adam(D.parameters(), lr=0.00002)
+g_optimizer = torch.optim.Adam(G.parameters(), lr=0.00002)
 
 
 def reset_grad():
@@ -67,7 +67,6 @@ fake_scores = np.zeros(num_epochs)
 # Start training
 total_step = len(data_loader)
 for epoch in range(num_epochs):
-    print(epoch)
     for i, images in enumerate(data_loader):
         #images = images.view(batch_size, -1).cuda()
         images = Variable(images.cuda())
