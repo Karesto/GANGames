@@ -18,7 +18,7 @@ batch_size = 32
 
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
-data_loader = rushhour.dataset(bs = batch_size)
+data_loader = rushhour.dataset(bs = batch_size,flatten = False)
 
 
 
@@ -26,22 +26,37 @@ data_loader = rushhour.dataset(bs = batch_size)
 
 
 # Discriminator
-D = nn.Sequential(
-    nn.Linear(image_size, hidden_size),
-    nn.LeakyReLU(0.2),
-    nn.Linear(hidden_size, hidden_size),
-    nn.LeakyReLU(0.2),
-    nn.Linear(hidden_size, 1),
-    nn.Sigmoid())
-
+class Discriminator(nn.Module):
+    def __init__(self, image_size, hidden_size):
+        super(Discriminator, self).__init__()
+        self.main = nn.Sequential(
+            nn.Linear(image_size, hidden_size),
+            nn.LeakyReLU(0.2),
+            nn.Linear(hidden_size, hidden_size),
+            nn.LeakyReLU(0.2),
+            nn.Linear(hidden_size, 1),
+            nn.Sigmoid())
+    def forward(self, input):
+        return self.main(input)
 # Generator 
-G = nn.Sequential(
-    nn.Linear(latent_size, hidden_size),
-    nn.ReLU(),
-    nn.Linear(hidden_size, hidden_size),
-    nn.ReLU(),
-    nn.Linear(hidden_size, image_size))
+class Generator(nn.Module):
+    def __init__(self, latent_size, image_size, hidden_size):
+        super(Generator, self).__init__()
+        self.main = nn.Sequential(
+            nn.Sequential(
+            nn.Linear(latent_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, image_size))
+            )
 
+    def forward(self, input):
+        return self.main(input)
+
+
+G = Generator(latent_size, image_size, hidden_size)
+D = Discriminator(image_size, hidden_size)
 G = G.to(device)
 D = D.to(device)
 
@@ -69,6 +84,7 @@ for epoch in range(num_epochs):
     for i, images in enumerate(data_loader):
         #images = images.view(batch_size, -1).cuda()
         images = Variable(images.cuda())
+        images = torch.unsqueeze(images, dim =1)
         # Create the labels which are later used as input for the BCE loss
         real_labels = torch.ones(images.shape[0], 1).cuda()
         real_labels = Variable(real_labels)
@@ -87,7 +103,7 @@ for epoch in range(num_epochs):
         
         # Compute BCELoss using fake images
         # First term of the loss is always zero since fake_labels == 0
-        z = torch.randn(images.shape[0], latent_size).cuda()
+        z =  torch.randn(batch_size, latent_size, 1, 1).cuda()
         z = Variable(z)
         fake_images = G(z)
         outputs = D(fake_images)
@@ -144,4 +160,4 @@ for epoch in range(num_epochs):
     plt.savefig('accuracy.pdf')
     plt.close()
     torch.save(G, 'G.pth')
-    torch.save(D, 'D.p')
+    torch.save(D, 'D.pth')
