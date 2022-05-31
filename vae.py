@@ -6,7 +6,6 @@ from torch.autograd import Variable
 import utils
 
 bs = 100
-# MNIST Dataset
 
 train_loader = utils.dataset_wl(bs = bs, short = 200000)
 
@@ -89,3 +88,5 @@ def train(epoch):
 
 for epoch in range(1,301):
     train(epoch)
+    
+torch.save(cvae, 'vae.pth')
