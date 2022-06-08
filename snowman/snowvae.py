@@ -117,7 +117,7 @@ def train(epoch):
         print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(snowdataset.dataset)))        
 
 
-for epoch in range(1,3):
+for epoch in range(1,301):
     train(epoch)
     
 torch.save(cvae, 'vae.pth')
