@@ -92,4 +92,4 @@ def train(epoch):
 for epoch in range(1,301):
     train(epoch)
     
-torch.save(cvae, 'vae.pth')
+torch.save(cvae, 'vaesimple.pth')
