@@ -82,10 +82,10 @@ def train(epoch):
         train_loss += loss.item()
         optimizer.step()
         
-        if batch_idx % 100 == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(snowdataset.dataset),
-                100. * batch_idx / len(snowdataset), loss.item() / len(data)))
+        # if batch_idx % 100 == 0:
+        #     print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+        #         epoch, batch_idx * len(data), len(snowdataset.dataset),
+        #         100. * batch_idx / len(snowdataset), loss.item() / len(data)))
         print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(snowdataset.dataset)))        
 
 
