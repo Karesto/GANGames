@@ -30,32 +30,32 @@ class VAE(nn.Module):
     def __init__(self, image_channels=9, h_dim=size, z_dim=4):
         super(VAE, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(image_channels, 32, kernel_size=3),
-            nn.BatchNorm2d(32),
+            nn.Conv2d(image_channels, 8, kernel_size=3),
+            nn.BatchNorm2d(8),
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(8, 4, kernel_size=3),
+            nn.BatchNorm2d(4),
             nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=3),
+            nn.Conv2d(4, 2, kernel_size=3),
             nn.BatchNorm2d(128),
             nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=3),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(2, 1, kernel_size=3),
+            nn.BatchNorm2d(1),
             nn.ReLU()
         )
         
-        self.mu = nn.Conv2d(256, z_dim, 3)
-        self.logvar = nn.Conv2d(256, z_dim, 3)
+        self.mu = nn.Conv2d(1, z_dim, 3)
+        self.logvar = nn.Conv2d(1, z_dim, 3)
         self.deassamble = nn.ConvTranspose2d(z_dim, h_dim, 3)
         
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(h_dim, 128, kernel_size=3),
-            nn.ReLU(),
-            nn.ConvTranspose2d(128, 64, kernel_size=3),
+            nn.ConvTranspose2d(h_dim, 64, kernel_size=3),
             nn.ReLU(),
             nn.ConvTranspose2d(64, 32, kernel_size=3),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, image_channels, kernel_size=3),
+            nn.ConvTranspose2d(32, 16, kernel_size=3),
+            nn.ReLU(),
+            nn.ConvTranspose2d(16, image_channels, kernel_size=3),
             nn.Softmax(),
         )
         
@@ -90,7 +90,6 @@ cvae = VAE().to(device)
 optimizer = optim.Adam(cvae.parameters())
 
 def loss_function(recon_x, x, mu, log_var):
-    print(recon_x[0])
     BCE = F.binary_cross_entropy(recon_x, x.float(), reduction='sum')
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return BCE + KLD

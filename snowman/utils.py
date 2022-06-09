@@ -11,41 +11,41 @@ def decoder(snow):
     Decodes a snow string matrix to a multi channel matrix
     '''
     size = snow.shape[0]
-    outs = (size,size,9)
+    outs = (9,size,size)
     board = np.zeros(outs)
 
     for i in range(size):
         for j in range(size):
 
             if snow[i][j] == 's':
-                board[i][j][0] = 1
+                board[0][i][j] = 1
             elif snow[i][j] == 'b':
-                board[i][j][1] = 1
+                board[1][i][j] = 1
             elif snow[i][j] == 'c':
-                board[i][j][2] = 1
+                board[2][i][j] = 1
             elif snow[i][j] == 'h':
-                board[i][j][3] = 1
+                board[3][i][j] = 1
             elif snow[i][j] == 'k':
-                board[i][j][4] = 1
+                board[4][i][j] = 1
             elif snow[i][j] == 'l':
-                board[i][j][5] = 1
+                board[5][i][j] = 1
             elif snow[i][j] == '.':
-                board[i][j][6] = 1
+                board[6][i][j] = 1
             elif snow[i][j] == 'A':
-                board[i][j][7] = 1
+                board[7][i][j] = 1
             elif snow[i][j] == 'W':
-                board[i][j][8] = 1
+                board[8][i][j] = 1
             
 
     return board 
 
 def encoder(snow):
     
-    size = snow.shape[0]
+    size = snow.shape[1]
     board = np.empty((size, size), dtype='<U1').astype("str")
     order = ['s', 'b', 'c', 'h', 'k', 'l', '.', 'A', 'W']
     for i in range(9):
-        board = np.core.defchararray.add(board,np.where(snow[:,:,i], np.full((size,size),order[i]), ''))
+        board = np.core.defchararray.add(board,np.where(snow[i], np.full((size,size),order[i]), ''))
 
     return board
 
