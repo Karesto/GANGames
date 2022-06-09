@@ -37,10 +37,9 @@ class VAE(nn.Module):
             nn.BatchNorm2d(4),
             nn.ReLU(),
             nn.Conv2d(4, 2, kernel_size=3),
-            nn.BatchNorm2d(128),
+            nn.BatchNorm2d(2),
             nn.ReLU(),
             nn.Conv2d(2, 1, kernel_size=3),
-            nn.BatchNorm2d(1),
             nn.ReLU()
         )
         
