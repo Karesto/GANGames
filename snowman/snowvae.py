@@ -3,14 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torch.optim as optim
-
+import matplotlib.pyplot as plt
 
 from random import randint
 
 from utils import *
 
 
-bs = 32
+bs = 64
 
 snowdataset = dataset(32, flatten = False)
 sample = next(iter(snowdataset))
@@ -29,7 +29,7 @@ class UnFlatten(nn.Module):
 
 
 class VAE(nn.Module):
-    def __init__(self, image_channels=9, h_dim=25, z_dim=32):
+    def __init__(self, image_channels=9, h_dim=25, z_dim=[128,64,32]):
         super(VAE, self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(image_channels, 8, kernel_size=3, padding=1),
@@ -43,14 +43,26 @@ class VAE(nn.Module):
             nn.ReLU(),
             nn.Conv2d(2, 1, kernel_size=3, padding=1),
             nn.ReLU(),
-            Flatten()
+            Flatten(),
+            nn.Linear(h_dim*h_dim, z_dim[0]),
+            nn.ReLU(),
+            nn.Linear(z_dim[0], z_dim[1]),
+            nn.ReLU()
         )
         
-        self.mu = nn.Linear(h_dim*h_dim, z_dim)
-        self.logvar = nn.Linear(h_dim*h_dim, z_dim)
-        self.back = nn.Linear(z_dim, h_dim*h_dim)
+        self.mu = nn.Linear(z_dim[1], z_dim[2])
+        self.logvar = nn.Linear(z_dim[1], z_dim[2])
+        
+        self.back = nn.Sequential(
+            nn.Linear(z_dim[2], z_dim[1]),
+            nn.ReLU(),
+            nn.Linear(z_dim[1], z_dim[0]),
+            nn.ReLU(),
+            nn.Linear(z_dim[0],h_dim*h_dim)
+        )
         
         self.decoder = nn.Sequential(
+            
             UnFlatten(),
             nn.ConvTranspose2d(1, 2, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -90,16 +102,16 @@ class VAE(nn.Module):
 
 
 cvae = VAE().to(device)
-optimizer = optim.Adam(cvae.parameters(), lr=0.00005)
+optimizer = optim.Adam(cvae.parameters(), lr=0.0025, weight_decay=0.001)
 
-def loss_function(recon_x, x, mu, log_var):
+def loss_function(recon_x, x, mu, log_var, coeff = 1):
     #print(recon_x,x)
-    BCE = F.binary_cross_entropy(recon_x, x.float(), reduction='sum')
+    BCE = F.binary_cross_entropy(recon_x, x.float())
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-    return BCE + KLD
+    return BCE + coeff*KLD
 
 
-def train(epoch):
+def train(epoch, coeff):
     cvae.train()
     train_loss = 0
     for batch_idx, data in enumerate(snowdataset):
@@ -107,16 +119,18 @@ def train(epoch):
         optimizer.zero_grad()
         
         recon_batch, mu, log_var = cvae(data.float())
-        loss = loss_function(recon_batch, data, mu, log_var)
+        loss = loss_function(recon_batch, data, mu, log_var, coeff)
         
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
-        
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(snowdataset.dataset)))        
 
+    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss))        
 
-for epoch in range(1,1001):
-    train(epoch)
+n_epoch = 1000
+cycle = frange_cycle_cosine(0,1,n_epoch)
+
+for epoch in range(1,n_epoch+1):
+    train(epoch, cycle[epoch-1])
     
 torch.save(cvae, 'vae-recep.pth')
