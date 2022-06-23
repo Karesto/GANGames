@@ -217,7 +217,7 @@ def main():
     train_loader = dataset_wl(batch_size, short = False)
 
     #### Model training (if necessary)
-    train_model(model, train_loader, "densenet1.pth", 1)
+    train_model(model, train_loader, "densenet1.pth", 100)
 
 
 
