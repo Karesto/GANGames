@@ -41,6 +41,9 @@ from torch.nn import functional as F
 import argparse
 from utils import *
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 ngpu = 1
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
 
@@ -164,7 +167,7 @@ class DenseNet(nn.Module):
 
 def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
     print("Starting training")
-    learning_rate = 0.0001
+    learning_rate = 0.0005
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-4)
@@ -192,7 +195,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
             correct += predicted.eq(targets.argmax(1)).sum().item()
             if batch_idx % 500 ==0 : 
                 print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-        print(outputs[:,10], targets.argmax(1))
+        print(predicted, targets.argmax(1))
         scheduler.step()
 
 
@@ -214,7 +217,7 @@ def main():
             growthRate=12, depth=40, reduction=0.5, bottleneck=True).to(device)
     model.to(device)
 
-    train_loader = dataset_wl(batch_size, short = False)
+    train_loader = dataset_wl(batch_size, short = 5000)
 
     #### Model training (if necessary)
     train_model(model, train_loader, "densenet1.pth", 100)
