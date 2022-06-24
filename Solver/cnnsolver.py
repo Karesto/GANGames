@@ -217,7 +217,7 @@ def main():
             growthRate=12, depth=40, reduction=0.5, bottleneck=True).to(device)
     model.to(device)
 
-    train_loader = dataset_wl(batch_size, short = 5000)
+    train_loader = dataset_wl(batch_size, short = 75000)
 
     #### Model training (if necessary)
     train_model(model, train_loader, "densenet1.pth", 100)
