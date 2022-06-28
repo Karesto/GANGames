@@ -132,7 +132,32 @@ def dataset_wl(bs, short = 50000, flatten = False, new = False):
 
     return(data_loader)
 
+def datasetwithval(bs, num = 100000, flatten = False, new = False):
 
+    if os.path.exists('rushtest.txt') and not new:
+        rush = np.loadtxt('rushtest.txt')
+        label =  np.loadtxt('labeltest.txt')
+    else:
+        base = np.genfromtxt(datadir, dtype= str)[:,0:2]
+        data = base[np.random.choice(len(base),num)]
+        rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
+        label = data[:,0].astype(np.int)
+        np.savetxt("rushtest.txt", rush, fmt='%i')
+        np.savetxt("labeltest.txt", label, fmt='%i')
+
+    
+    if not flatten:
+        rush = rush.reshape(-1,26,6,6)
+    ratio = 0.2
+    dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
+    train_set, val_set = torch.utils.data.random_split(dataset, [int(num*(1-ratio)), int(num*ratio)], torch.Generator().manual_seed(42))
+    train_loader = torch.utils.data.DataLoader(dataset=train_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    return(train_loader, val_loader)
 
 
 

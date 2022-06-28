@@ -18,6 +18,8 @@ import math
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+
+from utils import *
 """
 In ResNet, we see how the skip connection added as identity function from the inputs
 to interact with the Conv layers. But in DenseNet, we see instead of adding skip 
@@ -161,17 +163,33 @@ class DenseNet(nn.Module):
         return out
 
 
+def test_natural(net, test_loader):
+    '''Basic testing function.'''
 
+    correct = 0
+    total = 0
+    # since we're not training, we don't need to calculate the gradients for our outputs
+    with torch.no_grad():
+        for i,data in enumerate(test_loader, 0):
+            images, labels = data[0].to(device), data[1].to(device)
+            # calculate outputs by running images through the network
+            outputs = net(images.float())
+            # the class with the highest energy is what we choose as prediction
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    return 100 * correct / total
 
 
 
 def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
     print("Starting training")
-    learning_rate = 0.0005
+    learning_rate = 0.002
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)  
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=250)  
 
     for epoch in range(num_epochs):
         print('\nEpoch: %d' % epoch)
@@ -182,7 +200,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
 
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
-            targets = torch.nn.functional.one_hot(targets.to(torch.int64), num_classes = 60)
+            targets = torch.nn.functional.one_hot(targets.to(torch.int64), num_classes = 61)
             optimizer.zero_grad()
             outputs = net(inputs.float())
             loss = criterion(outputs, targets.float())
@@ -198,13 +216,18 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
         print(predicted, targets.argmax(1))
         scheduler.step()
 
+        if val_loader:
+            acc = test_natural(net, val_loader)
+            print("Model natural accuracy (validation): {}".format(acc))
 
-    torch.save(net.state_dict(),pth_filename)
-    print('Model saved in {}'.format(pth_filename))
+        if epoch % 100 == 0:
+            namestr = pth_filename + f"epoch{epoch}" + ".pth"
+            torch.save(net.state_dict(),namestr)
+            print('Model saved in {}'.format(namestr))
 
 def main():
     input_channel = 26
-    n_classes = 60
+    n_classes = 61
 
     datadir = "rush.txt"
     ngpu = 1
@@ -216,11 +239,10 @@ def main():
     model = DenseNet(input_channel=input_channel, n_classes=n_classes, 
             growthRate=12, depth=40, reduction=0.5, bottleneck=True).to(device)
     model.to(device)
-
-    train_loader = dataset_wl(batch_size, short = 75000)
-
+    train_loader, val_loader = datasetwithval(batch_size, num = 250000, new = True)
+    
     #### Model training (if necessary)
-    train_model(model, train_loader, "densenet1.pth", 100)
+    train_model(model, train_loader, "densenet2", 1000, val_loader = val_loader)
 
 
 
