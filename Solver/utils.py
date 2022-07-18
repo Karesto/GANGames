@@ -3,7 +3,10 @@ import string
 import torch
 import os 
 
-datadir = "rush.txt"
+from imbalancedsampler import ImbalancedDatasetSampler
+
+
+datadir = "data/rush.txt"
 
 
 def decoder(rush):
@@ -57,8 +60,10 @@ def encoder_one_hot(rush):
     return out
 
 
-def encoder(rush):
-
+def encoder(rush, first):
+    if first:
+        rush = np.rot90(rush.reshape((6,6)),2).T 
+        rush = rush[::-1,:]
     board = rush.flatten()
     out = ""
     basestring = "xo" + string.ascii_uppercase
@@ -75,19 +80,19 @@ def dataset(bs, short = 50000, flatten = False, new = False):
 
     
     if short:
-        if os.path.exists('rushnumpyshort.txt') and not new:
-            rush = np.loadtxt('rushnumpyshort.txt')
+        if os.path.exists('data/rushnumpyshort.txt') and not new:
+            rush = np.loadtxt('data/rushnumpyshort.txt')
         else:
             data = np.random.choice(np.genfromtxt(datadir, dtype= str)[:,1],short)
             rush = np.array([decoder(x).flatten() for x in data])
-            np.savetxt("rushnumpyshort.txt", rush, fmt='%i')
+            np.savetxt("data/rushnumpyshort.txt", rush, fmt='%i')
     else: 
-        if os.path.exists('rushnumpy.txt'):
-            rush = np.loadtxt('rushnumpy.txt')
+        if os.path.exists('data/rushnumpy.txt'):
+            rush = np.loadtxt('data/rushnumpy.txt')
         else:
             data = np.genfromtxt(datadir, dtype= str)[:,1]
             rush = np.array([decoder(x).flatten() for x in data])
-            np.savetxt("rushnumpy.txt", rush, fmt='%i')
+            np.savetxt("data/rushnumpy.txt", rush, fmt='%i')
     if not flatten:
         rush = rush.reshape(-1,6,6)
     data_loader = torch.utils.data.DataLoader(dataset=rush,
@@ -102,26 +107,26 @@ def dataset_wl(bs, short = 50000, flatten = False, new = False):
     '''
 
     if short:
-        if os.path.exists('rushnumpyshortwl.txt') and not new:
-            rush = np.loadtxt('rushnumpyshortwl.txt')
-            label =  np.loadtxt('labelnumpyshortwl.txt')
+        if os.path.exists('data/rushnumpyshortwl.npy') and not new:
+            rush = np.load('data/rushnumpyshortwl.npy')
+            label =  np.load('data/labelnumpyshortwl.npy')
         else:
             base = np.genfromtxt(datadir, dtype= str)[:,0:2]
             data = base[np.random.choice(len(base),short)]
             rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
             label = data[:,0].astype(np.int)
-            np.savetxt("rushnumpyshortwl.txt", rush, fmt='%i')
-            np.savetxt("labelnumpyshortwl.txt", label, fmt='%i')
+            np.save("data/rushnumpyshortwl.npy", rush)
+            np.save("data/labelnumpyshortwl.npy", label)
     else: 
-        if os.path.exists('rushnumpywl.txt'):
-            rush = np.loadtxt('rushnumpywl.txt')
-            label =  np.loadtxt('labelnumpywl.txt')
+        if os.path.exists('data/rushnumpywl.npy'):
+            rush = np.load('data/rushnumpywl.npy')
+            label =  np.load('data/labelnumpywl.npy')
         else:
             data = np.genfromtxt(datadir, dtype= str)[:,0:2]
             rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
             label = data[:,0].astype(np.int)
-            np.savetxt("rushnumpywl.txt", rush, fmt='%i')
-            np.savetxt("labelnumpywl.txt", label, fmt='%i')
+            np.save("data/rushnumpywl.npy", rush)
+            np.save("data/labelnumpywl.npy", label)
     if not flatten:
         rush = rush.reshape(-1,26,6,6)
     
@@ -134,16 +139,16 @@ def dataset_wl(bs, short = 50000, flatten = False, new = False):
 
 def datasetwithval(bs, num = 100000, flatten = False, new = False):
 
-    if os.path.exists('rushtest.txt') and not new:
-        rush = np.loadtxt('rushtest.txt')
-        label =  np.loadtxt('labeltest.txt')
+    if os.path.exists('data/rushtest.npy') and not new:
+        rush = np.load('data/rushtest.npy')
+        label =  np.load('data/labeltest.npy')
     else:
         base = np.genfromtxt(datadir, dtype= str)[:,0:2]
         data = base[np.random.choice(len(base),num)]
         rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
         label = data[:,0].astype(np.int)
-        np.savetxt("rushtest.txt", rush, fmt='%i')
-        np.savetxt("labeltest.txt", label, fmt='%i')
+        np.save("data/rushtest.npy", rush)
+        np.save("data/labeltest.npy", label)
 
     
     if not flatten:
@@ -158,6 +163,135 @@ def datasetwithval(bs, num = 100000, flatten = False, new = False):
                                           batch_size=bs, 
                                           shuffle=True)
     return(train_loader, val_loader)
+
+
+
+
+def data_oracle(bs, num = 100000, flatten = False, new = False):
+
+    
+
+    if os.path.exists('data/rushtest.npy') and not new:
+        rush = np.load('data/rushtest.npy')
+        label =  np.load('data/labeltest.npy')
+    else:
+        unsolvable = np.load("data/unsolvable_lvl1.npy")
+        num = min(num,unsolvable.shape[0])
+        base = np.genfromtxt(datadir, dtype= str)[:,0:2]
+        data = base[np.random.choice(len(base),num)]
+        rush = np.array([decoder_one_hot(x[1]).flatten() for x in data]+ [decoder_one_hot(x).flatten() for x in unsolvable])
+        label = np.array([1]*num + [0]*num)
+        np.save("data/rushtest.npy", rush)
+        np.save("data/labeltest.npy", label)
+
+    
+    if not flatten:
+        rush = rush.reshape(-1,26,6,6)
+
+    #Making sure of integer length for both sets
+    ratio = 0.2
+    length = rush.shape[0]
+    train_length = int(length*(1-ratio))
+    val_length = length - train_length
+
+    #Dividing the set into train/test (or val)
+    dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
+    train_set, val_set = torch.utils.data.random_split(dataset, [train_length, val_length], torch.Generator().manual_seed(42))
+    train_loader = torch.utils.data.DataLoader(dataset=train_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    return(train_loader, val_loader)
+
+
+
+def data_oracle2(bs, num = 100000, flatten = False, new = False, cat = None):
+
+    
+
+    data = np.load("data/randombase.npy")
+    label = np.load("data/randombaselabel.npy")*1
+    rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
+    if not flatten:
+        rush = rush.reshape(-1,26,6,6)
+    if cat:
+        label = (label/60).astype(np.int) * cat
+    #Making sure of integer length for both sets
+    ratio = 0.2
+    length = rush.shape[0]
+    train_length = int(length*(1-ratio))
+    val_length = length - train_length
+
+    #Dividing the set into train/test (or val)
+    dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
+
+
+
+    train_set, val_set = torch.utils.data.random_split(dataset, [train_length, val_length], torch.Generator().manual_seed(42))
+    train_loader = torch.utils.data.DataLoader(dataset=train_set,
+                                            sampler=ImbalancedDatasetSampler(train_set),
+                                          batch_size=bs, 
+                                          shuffle=True)
+    val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    return(train_loader, val_loader)
+
+def data_solver(bs, num = 5000, flatten = False, new = False, cat = None):
+
+    
+
+    if os.path.exists('data/rushtest.npy') and not new:
+        rush = np.load('data/rushtest.npy')
+        label =  np.load('data/labeltest.npy')
+    else:
+        base = np.genfromtxt(datadir, dtype= str)[:,0:2]
+        data = base[np.random.choice(len(base),num)]
+        rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
+        label = data[:,0].astype(np.int)
+        np.save("data/rushtest.npy", rush)
+        np.save("data/labeltest.npy", label)
+
+    
+    if not flatten:
+        rush = rush.reshape(-1,26,6,6)
+    
+    if cat:
+        label = (label/np.max(label)* cat).astype(np.int) 
+    #Making sure of integer length for both sets
+    ratio = 0.2
+    length = rush.shape[0]
+    train_length = int(length*(1-ratio))
+    val_length = length - train_length
+
+    class_sample_count = np.array(
+    [len(np.where(label == t)[0]) for t in np.unique(label)])
+    print(np.unique(label))
+    weight = 1. / class_sample_count
+    print(weight)
+    samples_weight = torch.from_numpy(weight)
+    sampler = torch.utils.data.WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
+    #Dividing the set into train/test (or val)
+    dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
+
+
+
+
+    train_set, val_set = torch.utils.data.random_split(dataset, [train_length, val_length], torch.Generator().manual_seed(42))
+    train_loader = torch.utils.data.DataLoader(dataset=train_set,
+                                            sampler=sampler,
+                                          batch_size=bs)
+    val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    return(train_loader, val_loader)
+
+
+
+
+
 
 
 
@@ -187,4 +321,23 @@ def test_onehot_encoding():
     print(np.sum(indexes))
     print(indexes.shape)
 
+def transform(path):
+    rush = np.loadtxt(path) + 1 
+    rush_enc = np.array([encoder(x) for x in rush])
+    print(rush_enc)
+    np.savetxt("data/unsolvabletxt.txt", rush_enc, fmt='%s')
+    np.save("data/unsolvable_lvl1.npy",rush_enc)
+
+def transform2(path):
+    data = np.loadtxt(path, dtype = str)
+    rush = data[:,:-1].astype(np.float)
+    label = (data[:,-1] == "True")
+    print(rush)
+    print(label)
+    rush_enc = np.array([encoder(x) for x in rush])
+    # np.savetxt("randombase.txt", rush_enc, fmt='%s')
+    np.save("data/randombase.npy", rush_enc)
+    np.save("data/randombaselabel.npy", label)
+# transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
+
