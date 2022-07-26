@@ -183,7 +183,7 @@ def test_natural(net, test_loader):
 
 
 
-def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
+def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None , n_classes = 15):
     print("Starting training")
     learning_rate = 0.002
 
@@ -200,9 +200,10 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
 
         for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
-            targets = torch.nn.functional.one_hot(targets.to(torch.int64), num_classes = 61)
+            targets = torch.nn.functional.one_hot(targets.to(torch.int64), num_classes = n_classes)
             optimizer.zero_grad()
             outputs = net(inputs.float())
+            print(outputs, targets)
             loss = criterion(outputs, targets.float())
             loss.backward()
             optimizer.step()
@@ -241,7 +242,7 @@ def main():
     train_loader, val_loader = data_solver(batch_size, num = 150000, new = True, cat = n_classes-1)
     
     #### Model training (if necessary)
-    train_model(model, train_loader, "densenet_cat", 250, val_loader = val_loader)
+    train_model(model, train_loader, "densenet_cat", 250, val_loader = val_loader, n_classes = n_classes)
 
 
 
