@@ -3,13 +3,12 @@ import string
 import torch
 import os 
 
-from imbalancedsampler import ImbalancedDatasetSampler
 
 
 datadir = "data/rush.txt"
 
 
-def decoder(rush):
+def decoder(rush, size = 6):
     '''
     Takes in a rush hour string as defined in https://www.michaelfogleman.com/rush/ and transforms it into
     a 6x6 numpy array where 0 is empty, 1 is the main vehicle, -1 is a wall, and all other numbers represent the other vehicles
@@ -29,7 +28,7 @@ def decoder(rush):
 
     return board 
 
-def decoder_one_hot(rush):
+def decoder_one_hot(rush, size = 6):
 
     board = np.zeros((26,6,6))
 
@@ -60,16 +59,16 @@ def encoder_one_hot(rush):
     return out
 
 
-def encoder(rush, first):
+def encoder(rush, first, size = 6):
     if first:
-        rush = np.rot90(rush.reshape((6,6)),2).T 
+        rush = np.rot90(rush.reshape((size,size)),2).T 
         rush = rush[::-1,:]
     board = rush.flatten()
     out = ""
     basestring = "xo" + string.ascii_uppercase
     for i in board:
         out += basestring[int(i+1)] 
-    
+    print(out)
     return out
 
 
@@ -330,14 +329,14 @@ def transform(path):
 
 def transform2(path):
     data = np.loadtxt(path, dtype = str)
-    rush = data[:,:-1].astype(np.float)
-    label = (data[:,-1] == "True")
-    print(rush)
-    print(label)
-    rush_enc = np.array([encoder(x) for x in rush])
-    # np.savetxt("randombase.txt", rush_enc, fmt='%s')
-    np.save("data/randombase.npy", rush_enc)
-    np.save("data/randombaselabel.npy", label)
+    rush = data.astype(np.float) +1
+    print(rush.shape)
+    rush_enc = np.array([encoder(x, first= True,size= 8) for x in rush])
+    np.savetxt("lvl8txt.txt", rush_enc, fmt='%s')
+    np.save("data/lvl8.npy", rush_enc)
+    #np.save("data/lvl8.npy", label)
 # transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
+
+transform2("data/lvl8.txt")
 
