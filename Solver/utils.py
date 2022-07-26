@@ -338,5 +338,5 @@ def transform2(path):
 # transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
 
-transform2("data/lvl8.txt")
+# transform2("data/lvl8.txt")
 
