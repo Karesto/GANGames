@@ -335,8 +335,23 @@ def transform2(path):
     np.savetxt("lvl8txt.txt", rush_enc, fmt='%s')
     np.save("data/lvl8.npy", rush_enc)
     #np.save("data/lvl8.npy", label)
+
+def gaspard_to_fogleman(path):
+    data = np.loadtxt(path, dtype = str)
+    size = int(np.sqrt(data.shape[1]))
+    rush = data.astype(np.float) +1
+    
+    rush_encoded = np.array([encoder(x, first= True,size= size) for x in rush])
+    outpath = os.path.splitext(path)[0] + "translated"
+    
+    np.savetxt(outpath + ".txt", rush_encoded, fmt='%s')
+    np.save(outpath + ".npy", rush_encoded)
+
 # transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
+
+gaspard_to_fogleman("data/solv_black_boxes_6x6.txt")
+gaspard_to_fogleman("data/unsolv_black_boxes_6x6.txt")
 
 # transform2("data/lvl8.txt")
 

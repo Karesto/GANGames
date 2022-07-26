@@ -227,7 +227,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None):
 
 def main():
     input_channel = 26
-    n_classes = 15
+    n_classes = 15+1
     datadir = "data/rush.txt"
     ngpu = 1
 
@@ -238,7 +238,7 @@ def main():
     model = DenseNet(input_channel=input_channel, n_classes=n_classes, 
             growthRate=12, depth=40, reduction=0.5, bottleneck=True).to(device)
     model.to(device)
-    train_loader, val_loader = data_solver(batch_size, num = 150000, new = True, cat = n_classes)
+    train_loader, val_loader = data_solver(batch_size, num = 150000, new = True, cat = n_classes-1)
     
     #### Model training (if necessary)
     train_model(model, train_loader, "densenet_cat", 250, val_loader = val_loader)
