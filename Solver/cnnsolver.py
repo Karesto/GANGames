@@ -188,7 +188,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
     learning_rate = 0.002
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-4)
+    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=3e-3)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=250)  
 
     for epoch in range(num_epochs):
@@ -203,7 +203,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
             targets = torch.nn.functional.one_hot(targets.to(torch.int64), num_classes = n_classes)
             optimizer.zero_grad()
             outputs = net(inputs.float())
-            print(outputs, targets)
+            #print(outputs, targets)
             loss = criterion(outputs, targets.float())
             loss.backward()
             optimizer.step()
@@ -228,7 +228,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
 
 def main():
     input_channel = 26
-    n_classes = 15+1
+    n_classes = 15+2
     datadir = "data/rush.txt"
     ngpu = 1
 
@@ -239,7 +239,7 @@ def main():
     model = DenseNet(input_channel=input_channel, n_classes=n_classes, 
             growthRate=12, depth=40, reduction=0.5, bottleneck=True).to(device)
     model.to(device)
-    train_loader, val_loader = data_solver(batch_size, num = 150000, new = True, cat = n_classes-1)
+    train_loader, val_loader = data_solver(batch_size, num = 100000, new = True, cat = n_classes-2)
     
     #### Model training (if necessary)
     train_model(model, train_loader, "densenet_cat", 250, val_loader = val_loader, n_classes = n_classes)

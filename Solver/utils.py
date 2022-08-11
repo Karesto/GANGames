@@ -175,6 +175,8 @@ def data_oracle(bs, num = 100000, flatten = False, new = False):
         label =  np.load('data/labeltest.npy')
     else:
         unsolvable = np.load("data/unsolvable_lvl1.npy")
+        unsolvable2 = np.load("data/unsolv_black_boxes_6x6translated.npy")
+        unsolvable = np.concatenate((unsolvable, unsolvable2), axis = 0)
         num = min(num,unsolvable.shape[0])
         base = np.genfromtxt(datadir, dtype= str)[:,0:2]
         data = base[np.random.choice(len(base),num)]
@@ -230,7 +232,6 @@ def data_oracle2(bs, num = 100000, flatten = False, new = False, cat = None):
 
     train_set, val_set = torch.utils.data.random_split(dataset, [train_length, val_length], torch.Generator().manual_seed(42))
     train_loader = torch.utils.data.DataLoader(dataset=train_set,
-                                            sampler=ImbalancedDatasetSampler(train_set),
                                           batch_size=bs, 
                                           shuffle=True)
     val_loader = torch.utils.data.DataLoader(dataset=val_set,
@@ -246,9 +247,14 @@ def data_solver(bs, num = 5000, flatten = False, new = False, cat = None):
         rush = np.load('data/rushtest.npy')
         label =  np.load('data/labeltest.npy')
     else:
+        
+        unsolvable = np.load("data/unsolvable_lvl1.npy")
+        unsolvable2 = np.load("data/unsolv_black_boxes_6x6translated.npy")
+        unsolvable = np.concatenate((unsolvable, unsolvable2), axis = 0)
+
         base = np.genfromtxt(datadir, dtype= str)[:,0:2]
         data = base[np.random.choice(len(base),num)]
-        rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
+        rush = np.array([decoder_one_hot(x[1]).flatten() for x in data] + [decoder_one_hot(x).flatten() for x in unsolvable])
         label = data[:,0].astype(np.int)
         np.save("data/rushtest.npy", rush)
         np.save("data/labeltest.npy", label)
@@ -258,7 +264,8 @@ def data_solver(bs, num = 5000, flatten = False, new = False, cat = None):
         rush = rush.reshape(-1,26,6,6)
     
     if cat:
-        label = (label/np.max(label)* cat).astype(np.int) 
+        label = np.floor((label/np.max(label)* cat)).astype(np.int) +1
+        label = np.concatenate((label,np.zeros(len(unsolvable))), axis = 0)
     #Making sure of integer length for both sets
     ratio = 0.2
     length = rush.shape[0]
