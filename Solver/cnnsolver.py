@@ -212,8 +212,10 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets.argmax(1)).sum().item()
-            if batch_idx % 50 ==0 : 
+            if batch_idx % 25 ==0 : 
                 print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+
         print(predicted, targets.argmax(1))
         scheduler.step()
 
@@ -228,7 +230,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
 
 def main():
     input_channel = 26
-    n_classes = 15+2
+    n_classes = 4+2
     datadir = "data/rush.txt"
     ngpu = 1
 
@@ -242,7 +244,7 @@ def main():
     train_loader, val_loader = data_solver(batch_size, num = 100000, new = True, cat = n_classes-2)
     
     #### Model training (if necessary)
-    train_model(model, train_loader, "densenet_cat", 250, val_loader = val_loader, n_classes = n_classes)
+    train_model(model, train_loader, "densenet_cat", 100, val_loader = val_loader, n_classes = n_classes)
 
 
 

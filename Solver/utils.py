@@ -30,10 +30,10 @@ def decoder(rush, size = 6):
 
 def decoder_one_hot(rush, size = 6):
 
-    board = np.zeros((26,6,6))
+    board = np.zeros((26,size,size))
 
     for count, value in enumerate(rush):
-        i,j = count//6 ,count%6
+        i,j = count//size ,count%size
 
         if value == 'o':
             board[1][i][j] = 1
@@ -239,6 +239,44 @@ def data_oracle2(bs, num = 100000, flatten = False, new = False, cat = None):
                                           shuffle=True)
     return(train_loader, val_loader)
 
+
+def data_oracle8(bs, num = 100000, flatten = False):
+
+    solvable = np.load("data/solv_black_boxes_8x8.npy")
+    solvable2 = np.load("data/solv_lvl_8.npy")
+    solvable = np.concatenate((solvable, solvable2), axis = 0)
+
+    unsolvable = np.load("data/unsolv_black_boxes_8x8.npy")
+    unsolvable2 = np.load("data/unsolv_lvl_8.npy")
+    unsolvable = np.concatenate((unsolvable, unsolvable2), axis = 0)
+
+    rush = np.array([decoder_one_hot(x[1]).flatten() for x in solvable]+ [decoder_one_hot(x).flatten() for x in unsolvable])
+    label = np.array([1]*len(solvable) + [0]*len(unsolvable))
+
+    
+    if not flatten:
+        rush = rush.reshape(-1,26,8,8)
+
+    #Making sure of integer length for both sets
+    ratio = 0.2
+    length = rush.shape[0]
+    train_length = int(length*(1-ratio))
+    val_length = length - train_length
+
+    #Dividing the set into train/test (or val)
+    dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
+    train_set, val_set = torch.utils.data.random_split(dataset, [train_length, val_length], torch.Generator().manual_seed(42))
+    train_loader = torch.utils.data.DataLoader(dataset=train_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    val_loader = torch.utils.data.DataLoader(dataset=val_set,
+                                          batch_size=bs, 
+                                          shuffle=True)
+    return(train_loader, val_loader)
+
+
+
+
 def data_solver(bs, num = 5000, flatten = False, new = False, cat = None):
 
     
@@ -349,7 +387,7 @@ def gaspard_to_fogleman(path):
     rush = data.astype(np.float) +1
     
     rush_encoded = np.array([encoder(x, first= True,size= size) for x in rush])
-    outpath = os.path.splitext(path)[0] + "translated"
+    outpath = os.path.splitext(path)[0] + "_translated"
     
     np.savetxt(outpath + ".txt", rush_encoded, fmt='%s')
     np.save(outpath + ".npy", rush_encoded)
@@ -357,8 +395,10 @@ def gaspard_to_fogleman(path):
 # transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
 
-# gaspard_to_fogleman("data/solv_black_boxes_6x6.txt")
-# gaspard_to_fogleman("data/unsolv_black_boxes_6x6.txt")
+gaspard_to_fogleman("data/solv_black_boxes_8x8.txt")
+gaspard_to_fogleman("data/solv_lvl_8.txt")
+gaspard_to_fogleman("data/unsolv_black_boxes_8x8.txt")
+gaspard_to_fogleman("data/unsolv_lvl_8.txt")
 
 # transform2("data/lvl8.txt")
 
