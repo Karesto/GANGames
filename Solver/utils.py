@@ -395,10 +395,10 @@ def gaspard_to_fogleman(path):
 # transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
 
-gaspard_to_fogleman("data/solv_black_boxes_8x8.txt")
-gaspard_to_fogleman("data/solv_lvl_8.txt")
-gaspard_to_fogleman("data/unsolv_black_boxes_8x8.txt")
-gaspard_to_fogleman("data/unsolv_lvl_8.txt")
+# gaspard_to_fogleman("data/solv_black_boxes_8x8.txt")
+# gaspard_to_fogleman("data/solv_lvl_8.txt")
+# gaspard_to_fogleman("data/unsolv_black_boxes_8x8.txt")
+# gaspard_to_fogleman("data/unsolv_lvl_8.txt")
 
 # transform2("data/lvl8.txt")
 
