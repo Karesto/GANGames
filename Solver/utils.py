@@ -1,3 +1,4 @@
+from asyncio.base_tasks import _task_get_stack
 import numpy as np
 import string
 import torch
@@ -312,23 +313,22 @@ def data_solver(bs, num = 5000, flatten = False, new = False, cat = None):
 
     class_sample_count = np.array(
     [len(np.where(label == t)[0]) for t in np.unique(label)])
-    print(np.unique(label))
+    # print(np.unique(label))
     weight = 1. / class_sample_count
     print(weight)
     samples_weight = torch.from_numpy(weight)
-    sampler = torch.utils.data.WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'), len(samples_weight))
     #Dividing the set into train/test (or val)
     dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
 
 
-
-
     train_set, val_set = torch.utils.data.random_split(dataset, [train_length, val_length], torch.Generator().manual_seed(42))
+    sampler = torch.utils.data.WeightedRandomSampler(samples_weight.type('torch.DoubleTensor'),len(train_set))
+
     train_loader = torch.utils.data.DataLoader(dataset=train_set,
-                                            sampler=sampler,
-                                          batch_size=bs)
+                                          batch_size=32,
+                                          shuffle=True)
     val_loader = torch.utils.data.DataLoader(dataset=val_set,
-                                          batch_size=bs, 
+                                          batch_size=32, 
                                           shuffle=True)
     return(train_loader, val_loader)
 

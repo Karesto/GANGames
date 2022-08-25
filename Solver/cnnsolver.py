@@ -185,12 +185,13 @@ def test_natural(net, test_loader):
 
 def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None , n_classes = 15):
     print("Starting training")
-    learning_rate = 0.002
+    learning_rate = 0.003
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=3e-3)
+    optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=1e-3)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=250)  
 
+    
     for epoch in range(num_epochs):
         print('\nEpoch: %d' % epoch)
         net.train()
@@ -212,10 +213,10 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets.argmax(1)).sum().item()
-            if batch_idx % 25 ==0 : 
-                print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+            # if batch_idx % 25 ==0 : 
+            #     print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
         print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-
+        print(total)
         print(predicted, targets.argmax(1))
         scheduler.step()
 
@@ -241,7 +242,7 @@ def main():
     model = DenseNet(input_channel=input_channel, n_classes=n_classes, 
             growthRate=12, depth=40, reduction=0.5, bottleneck=True).to(device)
     model.to(device)
-    train_loader, val_loader = data_solver(batch_size, num = 100000, new = True, cat = n_classes-2)
+    train_loader, val_loader = data_solver(batch_size, num = 10000 , new = True, cat = n_classes-2)
     
     #### Model training (if necessary)
     train_model(model, train_loader, "densenet_cat", 100, val_loader = val_loader, n_classes = n_classes)
