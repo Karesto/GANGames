@@ -26,6 +26,36 @@ def decoder(rush):
 
     return board 
 
+def decoder_one_hot(rush):
+
+    board = np.zeros((15,6,6))
+
+    for count, value in enumerate(rush):
+        i,j = count//6 ,count%6
+
+        if value == 'o':
+            board[1][i][j] = 1
+        elif value == 'x':
+            board[0][i][j] = 1
+        else:
+            index = string.ascii_uppercase.index(value)+2
+            board[index][i][j] = 1
+
+    return board 
+
+def encoder_one_hot(rush):
+    
+    out = ""
+    n = rush.shape[1]
+    basestring = "xo" + string.ascii_uppercase
+
+    for i in range(n):
+        for j in range(n):
+            index =np.where(rush[:,i,j]==1)[0][0]
+            out += basestring[index]
+            
+    return out
+
 
 def encoder(rush):
 
@@ -78,7 +108,7 @@ def dataset_wl(bs, short = 50000, flatten = True, new = False):
         else:
             base = np.genfromtxt(datadir, dtype= str)[:,0:2]
             data = base[np.random.choice(len(base),short)]
-            rush = np.array([decoder(x[1]).flatten() for x in data])
+            rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
             label = data[:,0].astype(np.int)
             np.savetxt("rushnumpyshortwl.txt", rush, fmt='%i')
             np.savetxt("labelnumpyshortwl.txt", label, fmt='%i')
@@ -88,12 +118,12 @@ def dataset_wl(bs, short = 50000, flatten = True, new = False):
             label =  np.loadtxt('labelnumpywl.txt')
         else:
             data = np.genfromtxt(datadir, dtype= str)[:,0:2]
-            rush = np.array([decoder(x[1]).flatten() for x in data])
+            rush = np.array([decoder_one_hot(x[1]).flatten() for x in data])
             label = data[:,0].astype(np.int)
             np.savetxt("rushnumpywl.txt", rush, fmt='%i')
             np.savetxt("labelnumpywl.txt", label, fmt='%i')
     if not flatten:
-        rush = rush.reshape(-1,6,6)
+        rush = rush.reshape(-1,15,6,6)
     
     dataset = torch.utils.data.TensorDataset(torch.tensor(rush), torch.tensor(label))
     data_loader = torch.utils.data.DataLoader(dataset=dataset,
@@ -120,3 +150,15 @@ def test_encoding():
     print(np.sum(indexes))
     print(indexes.shape)
 
+def test_onehot_encoding():
+    data = np.random.choice(np.genfromtxt(datadir, dtype= str)[:,1],50000)
+    rush = np.array([decoder(x).flatten() for x in data])
+    other = np.array([encoder(x) for x in rush])
+
+    indexes = other == data
+
+    print(np.sum(indexes))
+    print(indexes.shape)
+
+print("hey")
+test_onehot_encoding()

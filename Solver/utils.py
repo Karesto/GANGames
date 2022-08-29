@@ -241,22 +241,18 @@ def data_oracle2(bs, num = 100000, flatten = False, new = False, cat = None):
     return(train_loader, val_loader)
 
 
-def data_oracle8(bs, num = 100000, flatten = False):
+def data_oracle7(bs, num = 100000, flatten = False):
 
-    solvable = np.load("data/solv_black_boxes_8x8.npy")
-    solvable2 = np.load("data/solv_lvl_8.npy")
-    solvable = np.concatenate((solvable, solvable2), axis = 0)
+    solvable = np.load("data/solv_multi_7x7_translated.npy")
 
-    unsolvable = np.load("data/unsolv_black_boxes_8x8.npy")
-    unsolvable2 = np.load("data/unsolv_lvl_8.npy")
-    unsolvable = np.concatenate((unsolvable, unsolvable2), axis = 0)
+    unsolvable = np.load("data/unsolv_multi_7x7_translated.npy")
 
-    rush = np.array([decoder_one_hot(x[1]).flatten() for x in solvable]+ [decoder_one_hot(x).flatten() for x in unsolvable])
+    rush = np.array([decoder_one_hot(x,size=7).flatten() for x in solvable]+ [decoder_one_hot(x,size=7).flatten() for x in unsolvable])
     label = np.array([1]*len(solvable) + [0]*len(unsolvable))
 
     
     if not flatten:
-        rush = rush.reshape(-1,26,8,8)
+        rush = rush.reshape(-1,26,7,7)
 
     #Making sure of integer length for both sets
     ratio = 0.2
@@ -395,10 +391,8 @@ def gaspard_to_fogleman(path):
 # transform("unsolvables_lvl1.txt")
 #test_onehot_encoding()
 
-# gaspard_to_fogleman("data/solv_black_boxes_8x8.txt")
-# gaspard_to_fogleman("data/solv_lvl_8.txt")
-# gaspard_to_fogleman("data/unsolv_black_boxes_8x8.txt")
-# gaspard_to_fogleman("data/unsolv_lvl_8.txt")
+# gaspard_to_fogleman("data/solv_multi_7x7.txt")
+# gaspard_to_fogleman("data/unsolv_multi_7x7.txt")
 
 # transform2("data/lvl8.txt")
 
