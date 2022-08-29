@@ -224,7 +224,7 @@ def train_model(net, train_loader, pth_filename, num_epochs, val_loader = None ,
             acc = test_natural(net, val_loader)
             print("Model natural accuracy (validation): {}".format(acc))
 
-        if epoch % 100 == 0:
+        if epoch % 45 == 0:
             namestr = pth_filename + f"epoch{epoch}" + ".pth"
             torch.save(net.state_dict(),namestr)
             print('Model saved in {}'.format(namestr))
